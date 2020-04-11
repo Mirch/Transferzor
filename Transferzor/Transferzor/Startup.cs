@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Amazon;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Transferzor.Data;
+using Transferzor.Services;
 
 namespace Transferzor
 {
@@ -22,6 +24,7 @@ namespace Transferzor
         }
 
         public IConfiguration Configuration { get; }
+        public AwsParameterStoreClient AwsParameterStoreClient { get { return new AwsParameterStoreClient(RegionEndpoint.EUCentral1); } }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
@@ -29,7 +32,7 @@ namespace Transferzor
         {
             services.AddDbContext<TransferzorDbContext>(options =>
             {
-                options.UseSqlServer(Configuration.GetConnectionString("TransferzorDb"));
+                options.UseSqlServer(AwsParameterStoreClient.GetValue("Transferzor-DB"));
             });
 
             services.AddRazorPages();
@@ -50,7 +53,7 @@ namespace Transferzor
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
