@@ -9,6 +9,6 @@ namespace Transferzor.Models
         public FileSendData FileSendData { get; set; }
 
         [DataType(DataType.Url)]
-        public string FileUri { get; set; }
+        public string FileName { get; set; }
     }
 }

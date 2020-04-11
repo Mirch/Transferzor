@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Amazon;
+using Amazon.S3;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
@@ -34,6 +35,10 @@ namespace Transferzor
             {
                 options.UseSqlServer(AwsParameterStoreClient.GetValue("Transferzor-DB"));
             });
+
+            services.AddAWSService<IAmazonS3>();
+            services.AddScoped<IAwsS3FileManager, AwsS3FileManager>();
+            services.AddScoped<IFileHandler, FileHandler>();
 
             services.AddRazorPages();
             services.AddServerSideBlazor();

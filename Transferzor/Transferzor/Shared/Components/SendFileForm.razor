@@ -1,8 +1,8 @@
 ﻿@using BlazorInputFile
 @using Transferzor.Models
-@using Transferzor.Data
+@using Transferzor.Services
 
-@inject TransferzorDbContext _context
+@inject IFileHandler _fileHandler
 
 <div class="sendFileForm">
     <EditForm Model=@data OnValidSubmit=@HandleValidSubmit>
@@ -21,7 +21,7 @@
 
         <div class="form-group">
             <label for="File">File</label>
-            <InputFile id="File" class="form-control" @bind-Value="data.File" />
+            <InputFile id="File" class="form-control" OnChange="@HandleFileUpload" />
         </div>
 
         <button class="btn btn-primary" type="submit">Send file</button>
@@ -33,10 +33,14 @@
 
     private async void HandleValidSubmit()
     {
-        _context.FileSendData.Add(data);
-        await _context.SaveChangesAsync();
+        await _fileHandler.UploadFileAsync(data);
 
         data = new FileSendData();
         base.StateHasChanged();
+    }
+
+    private void HandleFileUpload(IFileListEntry[] file)
+    {
+        data.File = file.FirstOrDefault();
     }
 }
