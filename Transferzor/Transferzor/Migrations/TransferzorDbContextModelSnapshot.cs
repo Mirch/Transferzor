@@ -44,11 +44,11 @@ namespace Transferzor.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<string>("FileName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("FileSendDataId")
                         .HasColumnType("int");
-
-                    b.Property<string>("FileUri")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("FileSendDateId");
 

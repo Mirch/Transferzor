@@ -10,7 +10,7 @@ using Transferzor.Data;
 namespace Transferzor.Migrations
 {
     [DbContext(typeof(TransferzorDbContext))]
-    [Migration("20200404173912_FileData")]
+    [Migration("20200411201017_FileData")]
     partial class FileData
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -46,11 +46,11 @@ namespace Transferzor.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<string>("FileName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("FileSendDataId")
                         .HasColumnType("int");
-
-                    b.Property<string>("FileUri")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("FileSendDateId");
 

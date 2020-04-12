@@ -8,5 +8,6 @@ namespace Transferzor.Services
     {
         Task<string> UploadFileAsync(string fileName, Stream file);
         Task<TransferFile> DownloadFileAsync(string fileName);
+        Task DeleteFileAsync(string fileName);
     }
 }

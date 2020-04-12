@@ -10,8 +10,8 @@ namespace Transferzor.Services
 {
     public class FileHandler : IFileHandler
     {
-        private readonly IAwsS3FileManager _s3FileManager;
         private readonly TransferzorDbContext _context;
+        private readonly IAwsS3FileManager _s3FileManager;
 
         public FileHandler(
             TransferzorDbContext context,
@@ -21,7 +21,22 @@ namespace Transferzor.Services
             _s3FileManager = s3FileManager;
         }
 
-        public async Task<TransferFile> DownloadFile(string fileName)
+        public async Task DeleteFileAsync(string fileName)
+        {
+            var dbFileData = await _context
+                .FileStorageData
+                    .Include(f => f.FileSendData)
+                .SingleOrDefaultAsync(f => f.FileName == fileName);
+
+            if (dbFileData == null)
+            {
+                return;
+            }
+
+            await _s3FileManager.DeleteFileAsync(fileName);
+        }
+
+        public async Task<TransferFile> DownloadFileAsync(string fileName)
         {
             var dbFileData = await _context
                 .FileStorageData
@@ -37,6 +52,7 @@ namespace Transferzor.Services
 
             _context.FileSendData.Remove(dbFileData.FileSendData);
             _context.FileStorageData.Remove(dbFileData);
+            await _s3FileManager.DeleteFileAsync(fileName);
             await _context.SaveChangesAsync();
 
             return file;

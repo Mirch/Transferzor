@@ -2,9 +2,7 @@
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Transferzor.Models;
@@ -25,7 +23,6 @@ namespace Transferzor.Services
 
         public async Task<string> UploadFileAsync(string fileName, Stream file)
         {
-            var fileTransferUtility = new TransferUtility(_client);
             var filestream = new MemoryStream();
             await file.CopyToAsync(filestream);
 
@@ -40,6 +37,7 @@ namespace Transferzor.Services
             };
             transferRequest.Metadata.Add("x-amz-meta-title", fileName);
 
+            var fileTransferUtility = new TransferUtility(_client);
             await fileTransferUtility.UploadAsync(transferRequest);
 
             return s3FileName;
@@ -53,14 +51,14 @@ namespace Transferzor.Services
                 Key = fileName
             };
 
-            using (var objresponse = await _client.GetObjectAsync(request))
+            using (var objectResponse = await _client.GetObjectAsync(request))
             {
-                if (objresponse.HttpStatusCode == HttpStatusCode.NotFound)
+                if (objectResponse.HttpStatusCode == HttpStatusCode.NotFound)
                 {
                     throw new Exception("Could not find file.");
                 }
 
-                using (var responseStream = objresponse.ResponseStream)
+                using (var responseStream = objectResponse.ResponseStream)
                 using (var reader = new StreamReader(responseStream))
                 {
                     var result = new MemoryStream();
@@ -71,6 +69,28 @@ namespace Transferzor.Services
                         Content = result.ToArray()
                     };
                 }
+            }
+        }
+
+        public async Task DeleteFileAsync(string fileName)
+        {
+            try
+            {
+                var deleteObjectRequest = new DeleteObjectRequest
+                {
+                    BucketName = _bucket,
+                    Key = fileName
+                };
+
+                var result = await _client.DeleteObjectAsync(deleteObjectRequest);
+            }
+            catch (AmazonS3Exception)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
     }
