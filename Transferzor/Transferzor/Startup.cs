@@ -14,6 +14,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Transferzor.Data;
 using Transferzor.Services;
+using Hangfire;
+using Hangfire.SqlServer;
 
 namespace Transferzor
 {
@@ -31,10 +33,15 @@ namespace Transferzor
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            var dbConnectionString = AwsParameterStoreClient.GetValue("Transferzor-DB");
+
             services.AddDbContext<TransferzorDbContext>(options =>
             {
-                options.UseSqlServer(AwsParameterStoreClient.GetValue("Transferzor-DB"));
+                options.UseSqlServer(dbConnectionString);
             });
+
+            services.AddHangfire(x => x.UseSqlServerStorage(dbConnectionString));
+            services.AddHangfireServer();
 
             services.AddAWSService<IAmazonS3>();
             services.AddScoped<IAwsS3FileManager, AwsS3FileManager>();
@@ -47,6 +54,8 @@ namespace Transferzor
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseHangfireDashboard();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

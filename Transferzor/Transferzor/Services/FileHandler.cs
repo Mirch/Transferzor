@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Hangfire;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,28 +13,16 @@ namespace Transferzor.Services
     {
         private readonly TransferzorDbContext _context;
         private readonly IAwsS3FileManager _s3FileManager;
+        private readonly IBackgroundJobClient _backgroundJobClient;
 
         public FileHandler(
             TransferzorDbContext context,
-            IAwsS3FileManager s3FileManager)
+            IAwsS3FileManager s3FileManager,
+            IBackgroundJobClient backgroundJobClient)
         {
             _context = context;
             _s3FileManager = s3FileManager;
-        }
-
-        public async Task DeleteFileAsync(string fileName)
-        {
-            var dbFileData = await _context
-                .FileStorageData
-                    .Include(f => f.FileSendData)
-                .SingleOrDefaultAsync(f => f.FileName == fileName);
-
-            if (dbFileData == null)
-            {
-                return;
-            }
-
-            await _s3FileManager.DeleteFileAsync(fileName);
+            _backgroundJobClient = backgroundJobClient;
         }
 
         public async Task<TransferFile> DownloadFileAsync(string fileName)
@@ -52,8 +41,9 @@ namespace Transferzor.Services
 
             _context.FileSendData.Remove(dbFileData.FileSendData);
             _context.FileStorageData.Remove(dbFileData);
-            await _s3FileManager.DeleteFileAsync(fileName);
             await _context.SaveChangesAsync();
+
+            _backgroundJobClient.Schedule<IAwsS3FileManager>(a => a.DeleteFileAsync(fileName), TimeSpan.FromMinutes(30));
 
             return file;
         }
@@ -70,6 +60,8 @@ namespace Transferzor.Services
                 FileName = s3fileName
             });
             await _context.SaveChangesAsync();
+
+            _backgroundJobClient.Schedule<IAwsS3FileManager>(f => f.DeleteFileAsync(s3fileName), TimeSpan.FromHours(24));
         }
     }
 }
