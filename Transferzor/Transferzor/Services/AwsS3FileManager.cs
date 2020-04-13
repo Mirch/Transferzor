@@ -30,7 +30,7 @@ namespace Transferzor.Services
 
             var transferRequest = new TransferUtilityUploadRequest()
             {
-                ContentType = "application/zip",
+                ContentType = "application/octet-stream",
                 InputStream = filestream,
                 BucketName = _bucket,
                 Key = s3FileName

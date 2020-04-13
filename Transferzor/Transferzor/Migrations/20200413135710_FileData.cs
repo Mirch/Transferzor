@@ -24,26 +24,19 @@ namespace Transferzor.Migrations
                 name: "FileStorageData",
                 columns: table => new
                 {
-                    FileSendDateId = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    FileSendDataId = table.Column<int>(nullable: true),
+                    FileSendDataId = table.Column<int>(nullable: false),
                     FileName = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_FileStorageData", x => x.FileSendDateId);
+                    table.PrimaryKey("PK_FileStorageData", x => x.FileSendDataId);
                     table.ForeignKey(
                         name: "FK_FileStorageData_FileSendData_FileSendDataId",
                         column: x => x.FileSendDataId,
                         principalTable: "FileSendData",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_FileStorageData_FileSendDataId",
-                table: "FileStorageData",
-                column: "FileSendDataId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

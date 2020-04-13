@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Transferzor.Data;
+using Transferzor.Helpers;
 using Transferzor.Models;
 
 namespace Transferzor.Services
@@ -51,17 +52,25 @@ namespace Transferzor.Services
         public async Task UploadFileAsync(FileSendData fileSendData)
         {
             _context.FileSendData.Add(fileSendData);
+            await _context.SaveChangesAsync();
 
             var s3fileName = await _s3FileManager.UploadFileAsync(fileSendData.File.Name, fileSendData.File.Data);
 
-            _context.FileStorageData.Add(new FileStorageData
+            var fileStorage = new FileStorageData
             {
-                FileSendDateId = fileSendData.Id,
+                FileSendDataId = fileSendData.Id,
                 FileName = s3fileName
-            });
+            };
+            _context.FileStorageData.Add(fileStorage);
             await _context.SaveChangesAsync();
 
             _backgroundJobClient.Schedule<IAwsS3FileManager>(f => f.DeleteFileAsync(s3fileName), TimeSpan.FromHours(24));
+            _backgroundJobClient.Enqueue<IEmailSender>(e =>
+                e.SendEmail(
+                    fileSendData.ReceiverEmail,
+                    "You received a new file",
+                    EmailConstructorHelpers.CreateNewFileReceivedEmailBody(fileStorage.FileName, fileSendData.SenderEmail)
+                    ));
         }
     }
 }
